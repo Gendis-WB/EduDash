@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'main_dashboard.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -10,6 +11,18 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   bool _isPasswordVisible = false;
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,8 +72,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Form Nama
                 TextField(
+                  controller: _nameController,
                   style: TextStyle(color: primaryTextColor),
                   decoration: InputDecoration(
                     labelText: 'Nama Lengkap',
@@ -75,8 +88,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Form Email
                 TextField(
+                  controller: _emailController,
                   style: TextStyle(color: primaryTextColor),
                   decoration: InputDecoration(
                     labelText: 'Email Sekolah / Pribadi',
@@ -91,8 +104,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Form Password
                 TextField(
+                  controller: _passwordController,
                   obscureText: !_isPasswordVisible,
                   style: TextStyle(color: primaryTextColor),
                   decoration: InputDecoration(
@@ -119,7 +132,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Tombol Daftar
                 SizedBox(
                   width: double.infinity,
                   height: 56,
@@ -130,15 +142,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    onPressed: () {
-                      // Langsung masuk ke Dashboard
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MainDashboard(),
-                        ),
-                        (route) => false,
-                      );
+                    onPressed: () async {
+                      if (_nameController.text.isNotEmpty &&
+                          _emailController.text.isNotEmpty &&
+                          _passwordController.text.isNotEmpty) {
+                        // Kunci semua data pendaftaran ke memori lokal
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setString(
+                          'profile_name',
+                          _nameController.text,
+                        );
+                        await prefs.setString(
+                          'user_email',
+                          _emailController.text,
+                        );
+                        await prefs.setString(
+                          'user_password',
+                          _passwordController.text,
+                        );
+                        await prefs.setBool('isLoggedIn', true);
+
+                        if (context.mounted) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MainDashboard(),
+                            ),
+                            (route) => false,
+                          );
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Harap lengkapi semua data!'),
+                          ),
+                        );
+                      }
                     },
                     child: const Text(
                       'Buat Akun',
@@ -152,7 +191,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Tombol kembali ke Login
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

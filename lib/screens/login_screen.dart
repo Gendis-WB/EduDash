@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'main_dashboard.dart';
 import 'register_screen.dart';
 
@@ -11,6 +12,16 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _isPasswordVisible = false;
+
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 32),
 
                 TextField(
+                  controller: _emailController,
                   style: TextStyle(color: primaryTextColor),
                   decoration: InputDecoration(
                     labelText: 'Email',
@@ -76,6 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 16),
 
                 TextField(
+                  controller: _passwordController,
                   obscureText: !_isPasswordVisible,
                   style: TextStyle(color: primaryTextColor),
                   decoration: InputDecoration(
@@ -123,15 +136,32 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    onPressed: () {
-                      // Masuk ke Dashboard dan hapus rute login dari memori HP
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MainDashboard(),
-                        ),
-                        (route) => false,
-                      );
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      final savedEmail = prefs.getString('user_email');
+                      final savedPassword = prefs.getString('user_password');
+
+                      if (_emailController.text == savedEmail &&
+                          _passwordController.text == savedPassword) {
+                        await prefs.setBool('isLoggedIn', true);
+                        if (context.mounted) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MainDashboard(),
+                            ),
+                            (route) => false,
+                          );
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Email atau Kata Sandi salah/belum terdaftar!',
+                            ),
+                          ),
+                        );
+                      }
                     },
                     child: const Text(
                       'Masuk',
@@ -153,7 +183,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: secondaryTextColor),
                     ),
                     TextButton(
-                      // Melompat ke Halaman Register
                       onPressed: () => Navigator.push(
                         context,
                         MaterialPageRoute(

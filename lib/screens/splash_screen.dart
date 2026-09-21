@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
+import 'main_dashboard.dart'; // Pastikan import ini ada
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,18 +15,34 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
+    _checkLoginStatus();
+  }
+
+  Future<void> _checkLoginStatus() async {
+    // Jeda 3 detik agar animasi Splash Screen tetap terlihat
+    await Future.delayed(const Duration(seconds: 3));
+
+    // Cek memori lokal
+    final prefs = await SharedPreferences.getInstance();
+    final isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
+
+    if (mounted) {
+      if (isLoggedIn) {
+        // Jika sudah login, langsung ke Dashboard
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const MainDashboard()),
+        );
+      } else {
+        // Jika belum, arahkan ke halaman Login
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       }
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Warna Biru Cerah Modern & Minimalis
     const Color primaryBlue = Color(0xFF2563EB);
 
     return Scaffold(
@@ -34,12 +52,9 @@ class _SplashScreenState extends State<SplashScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 1. Ikon dengan Sudut Melengkung + Bayangan Halus
               Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(
-                    28,
-                  ), // Sudut melengkung halus
+                  borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.12),
@@ -49,39 +64,32 @@ class _SplashScreenState extends State<SplashScreen> {
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(
-                    28,
-                  ), // Memotong gambar agar ikut melengkung
+                  borderRadius: BorderRadius.circular(28),
                   child: Image.asset(
                     'assets/images/logo.png',
-                    width: 108, // Ukuran diperkecil agar pas
+                    width: 108,
                     height: 108,
                     fit: BoxFit.cover,
                   ),
                 ),
               ),
-
-              const SizedBox(height: 32), // Spasi yang lebih proporsional
-              // 2. Judul Aplikasi "EduDash"
+              const SizedBox(height: 32),
               const Text(
                 'EduDash',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
-                  letterSpacing: -0.5, // Tipografi modern khas Jakarta Sans
+                  letterSpacing: -0.5,
                 ),
               ),
-
               const SizedBox(height: 8),
-
-              // 3. Tagline Khas EduDash
               const Text(
                 'Belajar Lebih, Raih Mimpi',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFFDBEAFE), // Teks putih kebiruan lembut
+                  color: Color(0xFFDBEAFE),
                   letterSpacing: 0.5,
                 ),
               ),
